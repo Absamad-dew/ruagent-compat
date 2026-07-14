@@ -25,10 +25,9 @@ the conformance runner itself without network access or private data. It does
 Run the reference suite:
 
 ```bash
-python -m venv .venv
-.venv/Scripts/python -m pip install -e ".[dev]"
-.venv/Scripts/python -m pytest
-.venv/Scripts/ruagent-compat verify --json reports/reference.json --html reports/reference.html
+python -m pip install -e ".[dev]"
+python -m pytest
+ruagent-compat verify --json reports/reference.json --html reports/reference.html
 ```
 
 ## Contract
