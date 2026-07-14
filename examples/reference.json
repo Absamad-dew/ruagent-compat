@@ -1,0 +1,63 @@
+[
+  {
+    "case": "schema_preservation",
+    "status": "pass",
+    "assertion": "schema preserved byte-for-value",
+    "details": {
+      "schema_keys": [
+        "$defs",
+        "$schema",
+        "additionalProperties",
+        "properties",
+        "required",
+        "type"
+      ],
+      "cyrillic": true
+    }
+  },
+  {
+    "case": "duplicate_idempotency",
+    "status": "pass",
+    "assertion": "duplicate side effect prevented",
+    "details": {
+      "counter": 1,
+      "cached_results": 1
+    }
+  },
+  {
+    "case": "permission_gate",
+    "status": "pass",
+    "assertion": "approval precedes side effect",
+    "details": {
+      "state": {},
+      "error": "permission_denied"
+    }
+  },
+  {
+    "case": "transactional_retry",
+    "status": "pass",
+    "assertion": "failed attempt rolled back",
+    "details": {
+      "attempts": 2,
+      "committed_tickets": 1
+    }
+  },
+  {
+    "case": "invalid_arguments",
+    "status": "pass",
+    "assertion": "invalid call blocked",
+    "details": {
+      "state": {},
+      "error": "invalid_arguments"
+    }
+  },
+  {
+    "case": "loop_budget",
+    "status": "pass",
+    "assertion": "agent loop bounded",
+    "details": {
+      "steps": 3,
+      "status": "max_steps"
+    }
+  }
+]
