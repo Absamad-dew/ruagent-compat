@@ -1,0 +1,79 @@
+name: Compatibility failure
+description: Submit a minimal, reproducible tool-agent failure for the shared suite
+title: "[compatibility] "
+body:
+  - type: dropdown
+    id: provider
+    attributes:
+      label: Provider or runtime
+      options:
+        - Yandex AI Studio
+        - GigaChat
+        - T-Tech / T-lite / T-pro
+        - OpenAI-compatible API
+        - Local inference runtime
+        - Reference adapter
+        - Other
+    validations:
+      required: true
+
+  - type: input
+    id: model
+    attributes:
+      label: Exact model and version
+      description: Include the model identifier, revision, API version, or weight hash.
+      placeholder: "Example: model@revision, SDK 1.2.3"
+    validations:
+      required: true
+
+  - type: textarea
+    id: environment
+    attributes:
+      label: Inference environment
+      description: SDK/runtime versions, operating system, transport, and relevant flags.
+      render: shell
+    validations:
+      required: true
+
+  - type: textarea
+    id: contract
+    attributes:
+      label: Minimal messages and tool schema
+      description: Remove credentials and private production data. Keep schema fields unchanged.
+      render: json
+    validations:
+      required: true
+
+  - type: textarea
+    id: expected
+    attributes:
+      label: Expected terminal state
+      description: Describe the observable state, side effects, attempts, and terminal status.
+    validations:
+      required: true
+
+  - type: textarea
+    id: actual
+    attributes:
+      label: Actual result
+      description: Include the smallest output or error needed to demonstrate the difference.
+    validations:
+      required: true
+
+  - type: textarea
+    id: trace
+    attributes:
+      label: Redacted trace or reproduction
+      description: Paste deterministic events or link to a minimal public reproduction.
+
+  - type: checkboxes
+    id: checks
+    attributes:
+      label: Submission checks
+      options:
+        - label: I removed credentials, tokens, personal data, and private production content.
+          required: true
+        - label: I can reproduce this on the exact version stated above.
+          required: true
+        - label: I understand that scripted reference results are not model-quality results.
+          required: true

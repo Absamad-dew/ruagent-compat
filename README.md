@@ -50,6 +50,14 @@ outside the reference layer.
 
 The provider matrix will only be published after a runnable baseline exists.
 
+## Report a compatibility failure
+
+Use the structured
+[compatibility failure form](https://github.com/Absamad-dew/ruagent-compat/issues/new?template=compatibility-failure.yml)
+to contribute a minimal case. Reports must pin the model and inference stack,
+preserve the tool schema, define the expected terminal state, and remove all
+credentials and private production data.
+
 ## Related upstream contribution
 
 [Yandex AI Studio SDK PR #235](https://github.com/yandex-cloud/yandex-ai-studio-sdk/pull/235)
