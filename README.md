@@ -1,5 +1,7 @@
 # ruagent-compat
 
+[![CI](https://github.com/Absamad-dew/ruagent-compat/actions/workflows/ci.yml/badge.svg)](https://github.com/Absamad-dew/ruagent-compat/actions/workflows/ci.yml)
+
 `ruagent-compat` is a small, provider-neutral executable contract for tool-using
 agents. It focuses on failures that language-only leaderboards miss:
 
@@ -51,10 +53,12 @@ The provider matrix will only be published after a runnable baseline exists.
 
 ## Related upstream contribution
 
-The workspace also contains a PR-ready patch for Yandex AI Studio SDK issue #216:
-an optional per-attempt timeout that remains bounded by the overall retry deadline.
-This is the intended workflow: upstream reliability test first, broader
-cross-provider comparison second.
+[Yandex AI Studio SDK PR #235](https://github.com/yandex-cloud/yandex-ai-studio-sdk/pull/235)
+implements an optional per-attempt timeout for
+[issue #216](https://github.com/yandex-cloud/yandex-ai-studio-sdk/issues/216),
+while keeping every attempt bounded by the overall retry deadline. This is the
+intended workflow: upstream reliability test first, broader cross-provider
+comparison second.
 
 ## Non-goals
 
@@ -70,4 +74,3 @@ cross-provider comparison second.
 состояние одинаковым способом. Сначала публикуются воспроизводимые тесты и
 negative results; сравнительные заявления о моделях появятся только после
 реальных прогонов.
-
