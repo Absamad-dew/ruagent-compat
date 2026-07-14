@@ -41,6 +41,14 @@ def test_registry_rejects_duplicate_names() -> None:
         ToolRegistry([tool, tool])
 
 
+def test_registry_preserves_declared_tool_order() -> None:
+    first = ToolSpec("z_first", "First", {"type": "object"}, lambda arguments, state: {})
+    second = ToolSpec("a_second", "Second", {"type": "object"}, lambda arguments, state: {})
+    registry = ToolRegistry([first, second])
+
+    assert [tool["name"] for tool in registry.wire_definitions()] == ["z_first", "a_second"]
+
+
 @pytest.mark.asyncio
 async def test_executor_supports_nested_cyrillic_schema() -> None:
     schema = {
@@ -115,6 +123,64 @@ async def test_duplicate_call_is_cached_without_second_side_effect() -> None:
 
 
 @pytest.mark.asyncio
+async def test_tool_result_is_detached_from_committed_state() -> None:
+    def handler(arguments: dict[str, Any], state: dict[str, Any]) -> dict[str, Any]:
+        state["items"] = [arguments["amount"]]
+        return {"items": state["items"]}
+
+    executor = ToolExecutor(ToolRegistry([integer_tool(handler)]), {})
+    outcome = await executor.execute(ToolCall("detached", "increment", {"amount": 1}))
+    outcome.result["items"].append(2)
+
+    assert executor.state == {"items": [1]}
+
+
+@pytest.mark.asyncio
+async def test_handler_cannot_mutate_state_through_leaked_working_copy() -> None:
+    leaked: dict[str, dict[str, Any]] = {}
+
+    def handler(arguments: dict[str, Any], state: dict[str, Any]) -> dict[str, bool]:
+        state["items"] = [arguments["amount"]]
+        leaked["state"] = state
+        return {"ok": True}
+
+    executor = ToolExecutor(ToolRegistry([integer_tool(handler)]), {})
+    await executor.execute(ToolCall("leaked", "increment", {"amount": 1}))
+    leaked["state"]["items"].append(2)
+
+    assert executor.state == {"items": [1]}
+
+
+@pytest.mark.asyncio
+async def test_non_json_result_does_not_commit_state() -> None:
+    def handler(arguments: dict[str, Any], state: dict[str, Any]) -> set[int]:
+        state["committed"] = True
+        return {arguments["amount"]}
+
+    executor = ToolExecutor(ToolRegistry([integer_tool(handler)]), {})
+
+    with pytest.raises(ToolExecutionError, match="non-JSON-serializable"):
+        await executor.execute(ToolCall("not-json", "increment", {"amount": 1}))
+
+    assert executor.state == {}
+
+
+@pytest.mark.asyncio
+async def test_unexpected_handler_error_is_typed_and_does_not_commit_state() -> None:
+    def handler(arguments: dict[str, Any], state: dict[str, Any]) -> None:
+        state["committed"] = True
+        raise ValueError("secret handler detail")
+
+    executor = ToolExecutor(ToolRegistry([integer_tool(handler)]), {})
+
+    with pytest.raises(ToolExecutionError, match="handler failed with ValueError") as caught:
+        await executor.execute(ToolCall("unexpected", "increment", {"amount": 1}))
+
+    assert "secret handler detail" not in str(caught.value)
+    assert executor.state == {}
+
+
+@pytest.mark.asyncio
 async def test_call_id_reuse_with_other_arguments_is_conflict() -> None:
     executor = ToolExecutor(
         ToolRegistry([integer_tool(lambda arguments, state: arguments)]),
@@ -151,4 +217,3 @@ async def test_unknown_tool_is_typed_error() -> None:
     executor = ToolExecutor(ToolRegistry(), {})
     with pytest.raises(UnknownToolError, match="unknown tool"):
         await executor.execute(ToolCall("missing", "missing", {}))
-

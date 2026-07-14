@@ -70,7 +70,7 @@ class ToolRegistry:
             raise UnknownToolError(f"unknown tool: {name}") from error
 
     def wire_definitions(self) -> list[dict[str, Any]]:
-        return [self._tools[name].wire_definition() for name in sorted(self._tools)]
+        return [tool.wire_definition() for tool in self._tools.values()]
 
 
 @dataclass(frozen=True, slots=True)
@@ -134,15 +134,28 @@ class ToolExecutor:
                 if error.retryable and attempts <= tool.max_retries:
                     continue
                 raise
+            except Exception as error:
+                raise ToolExecutionError(
+                    f"tool {tool.name} handler failed with {type(error).__name__}"
+                ) from error
 
+            _ensure_json_serializable(
+                {"result": result, "state": working_state},
+                tool_name=tool.name,
+            )
+            committed_state = copy.deepcopy(working_state)
             self.state.clear()
-            self.state.update(working_state)
+            self.state.update(committed_state)
             self._ledger[call.call_id] = _LedgerEntry(
                 fingerprint=fingerprint,
                 result=copy.deepcopy(result),
                 attempts=attempts,
             )
-            return ToolOutcome(result=result, cached=False, attempts=attempts)
+            return ToolOutcome(
+                result=copy.deepcopy(result),
+                cached=False,
+                attempts=attempts,
+            )
 
     @staticmethod
     def _validate(tool: ToolSpec, arguments: Mapping[str, Any]) -> None:
@@ -165,3 +178,17 @@ def _fingerprint(name: str, arguments: Mapping[str, Any]) -> str:
     ).encode("utf-8")
     return hashlib.sha256(payload).hexdigest()
 
+
+def _ensure_json_serializable(value: Any, *, tool_name: str) -> None:
+    try:
+        json.dumps(
+            value,
+            ensure_ascii=False,
+            allow_nan=False,
+            separators=(",", ":"),
+            sort_keys=True,
+        )
+    except (TypeError, ValueError) as error:
+        raise ToolExecutionError(
+            f"tool {tool_name} produced a non-JSON-serializable result or state"
+        ) from error

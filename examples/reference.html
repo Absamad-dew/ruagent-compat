@@ -16,13 +16,14 @@ th{background:#f3f6fb}.pass{color:#08783e;font-weight:700}
 </head>
 <body>
 <h1>ruagent-compat reference report</h1>
-<p>6/6 deterministic runtime contracts passed.
+<p>7/7 deterministic runtime contracts passed.
 Scripted reference only; no provider quality claim.</p>
 <table><thead><tr><th>Case</th><th>Status</th><th>Assertion</th><th>Details</th></tr></thead>
 <tbody><tr><td><code>schema_preservation</code></td><td class='pass'>PASS</td><td>schema preserved byte-for-value</td><td><code>{&quot;cyrillic&quot;: true, &quot;schema_keys&quot;: [&quot;$defs&quot;, &quot;$schema&quot;, &quot;additionalProperties&quot;, &quot;properties&quot;, &quot;required&quot;, &quot;type&quot;]}</code></td></tr>
 <tr><td><code>duplicate_idempotency</code></td><td class='pass'>PASS</td><td>duplicate side effect prevented</td><td><code>{&quot;cached_results&quot;: 1, &quot;counter&quot;: 1}</code></td></tr>
 <tr><td><code>permission_gate</code></td><td class='pass'>PASS</td><td>approval precedes side effect</td><td><code>{&quot;error&quot;: &quot;permission_denied&quot;, &quot;state&quot;: {}}</code></td></tr>
 <tr><td><code>transactional_retry</code></td><td class='pass'>PASS</td><td>failed attempt rolled back</td><td><code>{&quot;attempts&quot;: 2, &quot;committed_tickets&quot;: 1}</code></td></tr>
+<tr><td><code>serialization_boundary</code></td><td class='pass'>PASS</td><td>non-JSON result rejected before commit</td><td><code>{&quot;error&quot;: &quot;tool_execution_error&quot;, &quot;state&quot;: {}}</code></td></tr>
 <tr><td><code>invalid_arguments</code></td><td class='pass'>PASS</td><td>invalid call blocked</td><td><code>{&quot;error&quot;: &quot;invalid_arguments&quot;, &quot;state&quot;: {}}</code></td></tr>
 <tr><td><code>loop_budget</code></td><td class='pass'>PASS</td><td>agent loop bounded</td><td><code>{&quot;status&quot;: &quot;max_steps&quot;, &quot;steps&quot;: 3}</code></td></tr></tbody></table>
 </body></html>

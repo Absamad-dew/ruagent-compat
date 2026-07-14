@@ -9,6 +9,7 @@ from typing import Any, Protocol
 
 import httpx
 
+from .errors import AdapterProtocolError, AdapterTimeoutError, AdapterTransportError
 from .models import AgentTurn, Message, ToolCall
 
 
@@ -71,10 +72,28 @@ class OpenAICompatibleAdapter:
             "tool_choice": "auto",
             "temperature": 0,
         }
-        response = await self._client.post("chat/completions", json=payload)
-        response.raise_for_status()
-        body = response.json()
-        return parse_openai_turn(body["choices"][0]["message"])
+        try:
+            response = await self._client.post("chat/completions", json=payload)
+        except httpx.TimeoutException as error:
+            raise AdapterTimeoutError("provider request timed out") from error
+        except httpx.HTTPError as error:
+            raise AdapterTransportError(
+                f"provider transport failed with {type(error).__name__}"
+            ) from error
+
+        try:
+            response.raise_for_status()
+        except httpx.HTTPStatusError as error:
+            raise AdapterTransportError(
+                f"provider returned HTTP {response.status_code}"
+            ) from error
+
+        try:
+            body = response.json()
+        except ValueError as error:
+            raise AdapterProtocolError("provider response is not valid JSON") from error
+        message = _chat_message(body)
+        return parse_openai_turn(message)
 
     async def aclose(self) -> None:
         if self._owns_client:
@@ -123,18 +142,57 @@ def openai_message(message: Message) -> dict[str, Any]:
 def parse_openai_turn(payload: dict[str, Any]) -> AgentTurn:
     """Parse one OpenAI-compatible assistant message into the neutral contract."""
 
+    content = payload.get("content")
+    if content is not None and not isinstance(content, str):
+        raise AdapterProtocolError("assistant content must be a string or null")
+
+    raw_calls = payload.get("tool_calls", [])
+    if not isinstance(raw_calls, list):
+        raise AdapterProtocolError("assistant tool_calls must be an array")
+
     calls: list[ToolCall] = []
-    for raw_call in payload.get("tool_calls", []):
-        function = raw_call["function"]
+    for raw_call in raw_calls:
+        if not isinstance(raw_call, dict):
+            raise AdapterProtocolError("each tool call must be an object")
+        function = raw_call.get("function")
+        if not isinstance(function, dict):
+            raise AdapterProtocolError("tool call function must be an object")
+        call_id = raw_call.get("id")
+        name = function.get("name")
+        if not isinstance(call_id, str) or not call_id:
+            raise AdapterProtocolError("tool call id must be a non-empty string")
+        if not isinstance(name, str) or not name:
+            raise AdapterProtocolError("tool call name must be a non-empty string")
         raw_arguments = function.get("arguments", "{}")
-        arguments = json.loads(raw_arguments) if isinstance(raw_arguments, str) else raw_arguments
+        if isinstance(raw_arguments, str):
+            try:
+                arguments = json.loads(raw_arguments)
+            except json.JSONDecodeError as error:
+                raise AdapterProtocolError("tool call arguments are not valid JSON") from error
+        else:
+            arguments = raw_arguments
         if not isinstance(arguments, dict):
-            raise ValueError("tool call arguments must decode to an object")
+            raise AdapterProtocolError("tool call arguments must decode to an object")
         calls.append(
             ToolCall(
-                call_id=str(raw_call["id"]),
-                name=str(function["name"]),
+                call_id=call_id,
+                name=name,
                 arguments=arguments,
             )
         )
-    return AgentTurn(content=str(payload.get("content") or ""), tool_calls=tuple(calls))
+    return AgentTurn(content=content or "", tool_calls=tuple(calls))
+
+
+def _chat_message(payload: Any) -> dict[str, Any]:
+    if not isinstance(payload, dict):
+        raise AdapterProtocolError("provider response must be an object")
+    choices = payload.get("choices")
+    if not isinstance(choices, list) or not choices:
+        raise AdapterProtocolError("provider response must contain at least one choice")
+    choice = choices[0]
+    if not isinstance(choice, dict):
+        raise AdapterProtocolError("provider choice must be an object")
+    message = choice.get("message")
+    if not isinstance(message, dict):
+        raise AdapterProtocolError("provider choice must contain an assistant message")
+    return message

@@ -9,6 +9,22 @@ class CompatError(Exception):
     code = "compat_error"
 
 
+class AdapterError(CompatError):
+    code = "adapter_error"
+
+
+class AdapterTransportError(AdapterError):
+    code = "adapter_transport_error"
+
+
+class AdapterTimeoutError(AdapterTransportError):
+    code = "adapter_timeout"
+
+
+class AdapterProtocolError(AdapterError):
+    code = "adapter_protocol_error"
+
+
 class UnknownToolError(CompatError):
     code = "unknown_tool"
 
@@ -31,4 +47,3 @@ class ToolExecutionError(CompatError):
     def __init__(self, message: str, *, retryable: bool = False) -> None:
         super().__init__(message)
         self.retryable = retryable
-
