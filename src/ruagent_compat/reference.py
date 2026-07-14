@@ -29,6 +29,7 @@ async def run_reference_suite() -> list[ReferenceResult]:
         _duplicate_idempotency_case,
         _permission_gate_case,
         _transactional_retry_case,
+        _serialization_boundary_case,
         _invalid_arguments_case,
         _loop_budget_case,
     ]
@@ -191,6 +192,44 @@ async def _transactional_retry_case() -> tuple[dict[str, Any], str]:
     assert result.state == {"tickets": 1}, "failed attempt leaked partial state"
     assert tool_result.data["attempts"] == 2, "retry count was not recorded"
     return {"attempts": attempts, "committed_tickets": 1}, "failed attempt rolled back"
+
+
+async def _serialization_boundary_case() -> tuple[dict[str, Any], str]:
+    def invalid_result(arguments: dict[str, Any], state: dict[str, Any]) -> set[str]:
+        state["leaked"] = arguments["value"]
+        return {arguments["value"]}
+
+    registry = ToolRegistry(
+        [
+            ToolSpec(
+                "invalid_result",
+                "Return a deliberately non-JSON result",
+                {
+                    "type": "object",
+                    "properties": {"value": {"type": "string"}},
+                    "required": ["value"],
+                    "additionalProperties": False,
+                },
+                invalid_result,
+            )
+        ]
+    )
+    adapter = ScriptedAdapter(
+        [
+            AgentTurn(
+                tool_calls=(ToolCall("invalid-json-1", "invalid_result", {"value": "x"}),)
+            ),
+            AgentTurn(content="rejected"),
+        ]
+    )
+    result = await AgentRunner(registry).run(adapter, "run invalid result")
+    error = next(event for event in result.events if event.kind == "tool_error")
+    assert result.state == {}, "non-JSON result committed partial state"
+    assert error.data["error"] == "tool_execution_error", "wrong serialization error code"
+    return (
+        {"state": result.state, "error": error.data["error"]},
+        "non-JSON result rejected before commit",
+    )
 
 
 async def _invalid_arguments_case() -> tuple[dict[str, Any], str]:

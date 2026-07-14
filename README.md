@@ -7,8 +7,8 @@ agents. It focuses on failures that language-only leaderboards miss:
 
 - nested JSON Schema and Cyrillic tool contracts;
 - permission checks before side effects;
-- idempotent duplicate tool calls;
-- transactional retries after partial failure;
+- in-run duplicate suppression by call ID;
+- copy-on-write rollback for in-memory state retries;
 - deterministic event traces and state diffs;
 - bounded agent loops.
 
@@ -49,6 +49,16 @@ outside the reference layer.
 3. Yandex AI Studio Responses/OpenAI-compatible API.
 
 The provider matrix will only be published after a runnable baseline exists.
+The seventh reference contract rejects non-JSON tool results before they can
+commit partial state.
+
+## Reliability boundary
+
+The reference executor protects its in-memory state and suppresses duplicate
+calls only within one run. It cannot roll back an external payment, ticket, or
+HTTP request, and its ledger is not durable across process restarts. Production
+handlers still need provider-supported idempotency keys and a persistent record
+of `pending`, `succeeded`, and `uncertain` side effects.
 
 ## Report a compatibility failure
 

@@ -43,6 +43,15 @@
     }
   },
   {
+    "case": "serialization_boundary",
+    "status": "pass",
+    "assertion": "non-JSON result rejected before commit",
+    "details": {
+      "state": {},
+      "error": "tool_execution_error"
+    }
+  },
+  {
     "case": "invalid_arguments",
     "status": "pass",
     "assertion": "invalid call blocked",
