@@ -166,6 +166,21 @@ async def test_non_json_result_does_not_commit_state() -> None:
 
 
 @pytest.mark.asyncio
+async def test_unexpected_handler_error_is_typed_and_does_not_commit_state() -> None:
+    def handler(arguments: dict[str, Any], state: dict[str, Any]) -> None:
+        state["committed"] = True
+        raise ValueError("secret handler detail")
+
+    executor = ToolExecutor(ToolRegistry([integer_tool(handler)]), {})
+
+    with pytest.raises(ToolExecutionError, match="handler failed with ValueError") as caught:
+        await executor.execute(ToolCall("unexpected", "increment", {"amount": 1}))
+
+    assert "secret handler detail" not in str(caught.value)
+    assert executor.state == {}
+
+
+@pytest.mark.asyncio
 async def test_call_id_reuse_with_other_arguments_is_conflict() -> None:
     executor = ToolExecutor(
         ToolRegistry([integer_tool(lambda arguments, state: arguments)]),

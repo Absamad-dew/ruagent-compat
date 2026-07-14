@@ -60,6 +60,11 @@ HTTP request, and its ledger is not durable across process restarts. Production
 handlers still need provider-supported idempotency keys and a persistent record
 of `pending`, `succeeded`, and `uncertain` side effects.
 
+Provider timeouts, HTTP failures, malformed responses, and unexpected adapter
+exceptions terminate with `RunStatus.ADAPTER_ERROR` and a redacted `model_error`
+event instead of losing the partial trace. Task cancellation is still propagated
+to the caller.
+
 ## Report a compatibility failure
 
 Use the structured

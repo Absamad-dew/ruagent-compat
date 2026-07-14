@@ -7,6 +7,12 @@ from .adapters import (
     openai_tool_definition,
     parse_openai_turn,
 )
+from .errors import (
+    AdapterError,
+    AdapterProtocolError,
+    AdapterTimeoutError,
+    AdapterTransportError,
+)
 from .models import AgentTurn, Event, Message, RunResult, RunStatus, ToolCall
 from .runner import AgentRunner
 from .tools import ToolExecutor, ToolRegistry, ToolSpec
@@ -14,6 +20,10 @@ from .tools import ToolExecutor, ToolRegistry, ToolSpec
 __all__ = [
     "AgentRunner",
     "AgentTurn",
+    "AdapterError",
+    "AdapterProtocolError",
+    "AdapterTimeoutError",
+    "AdapterTransportError",
     "Event",
     "Message",
     "OpenAICompatibleAdapter",

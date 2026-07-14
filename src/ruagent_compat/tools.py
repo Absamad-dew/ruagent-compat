@@ -134,6 +134,10 @@ class ToolExecutor:
                 if error.retryable and attempts <= tool.max_retries:
                     continue
                 raise
+            except Exception as error:
+                raise ToolExecutionError(
+                    f"tool {tool.name} handler failed with {type(error).__name__}"
+                ) from error
 
             _ensure_json_serializable(
                 {"result": result, "state": working_state},

@@ -8,7 +8,7 @@ from collections.abc import Iterable
 from typing import Any
 
 from .adapters import AgentAdapter
-from .errors import CompatError
+from .errors import AdapterError, CompatError
 from .models import Event, Message, RunResult, RunStatus
 from .tools import ToolExecutor, ToolRegistry
 
@@ -38,7 +38,37 @@ class AgentRunner:
 
         for step in range(1, self.max_steps + 1):
             emit(step, "model_request", {"message_count": len(messages)})
-            turn = await adapter.respond(messages, self.registry.wire_definitions())
+            try:
+                turn = await adapter.respond(messages, self.registry.wire_definitions())
+            except AdapterError as error:
+                emit(
+                    step,
+                    "model_error",
+                    {"error": error.code, "message": str(error)},
+                )
+                return RunResult(
+                    status=RunStatus.ADAPTER_ERROR,
+                    final_text="",
+                    state=copy.deepcopy(state),
+                    events=tuple(events),
+                    steps=step,
+                )
+            except Exception as error:
+                emit(
+                    step,
+                    "model_error",
+                    {
+                        "error": "adapter_error",
+                        "message": f"unhandled adapter error: {type(error).__name__}",
+                    },
+                )
+                return RunResult(
+                    status=RunStatus.ADAPTER_ERROR,
+                    final_text="",
+                    state=copy.deepcopy(state),
+                    events=tuple(events),
+                    steps=step,
+                )
             emit(
                 step,
                 "model_response",

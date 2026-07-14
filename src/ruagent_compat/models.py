@@ -47,6 +47,7 @@ class Event:
 
 class RunStatus(StrEnum):
     COMPLETED = "completed"
+    ADAPTER_ERROR = "adapter_error"
     MAX_STEPS = "max_steps"
 
 

@@ -103,3 +103,20 @@ async def test_runner_propagates_cancellation() -> None:
     with pytest.raises(asyncio.CancelledError):
         await task
 
+
+@pytest.mark.asyncio
+async def test_runner_returns_redacted_adapter_error_trace() -> None:
+    class BrokenAdapter:
+        async def respond(self, messages: Any, tools: Any) -> AgentTurn:
+            raise RuntimeError("token=must-not-appear")
+
+    result = await AgentRunner(registry()).run(BrokenAdapter(), "fail safely")
+
+    assert result.status is RunStatus.ADAPTER_ERROR
+    assert result.state == {}
+    assert [event.kind for event in result.events] == ["model_request", "model_error"]
+    assert result.events[-1].data == {
+        "error": "adapter_error",
+        "message": "unhandled adapter error: RuntimeError",
+    }
+    assert "must-not-appear" not in str(result.to_dict())
