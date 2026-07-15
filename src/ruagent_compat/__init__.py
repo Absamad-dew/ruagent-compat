@@ -15,9 +15,20 @@ from .errors import (
 )
 from .models import AgentTurn, Event, Message, RunResult, RunStatus, ToolCall
 from .runner import AgentRunner
+from .structured_output import (
+    StructuredOutputAudit,
+    StructuredOutputKind,
+    StructuredOutputNormalization,
+    StructuredOutputProvenance,
+    StructuredOutputSource,
+    audit_structured_output,
+)
 from .tools import ToolExecutor, ToolRegistry, ToolSpec
 
+__version__ = "0.2.0"
+
 __all__ = [
+    "__version__",
     "AgentRunner",
     "AgentTurn",
     "AdapterError",
@@ -30,6 +41,11 @@ __all__ = [
     "RunResult",
     "RunStatus",
     "ScriptedAdapter",
+    "StructuredOutputAudit",
+    "StructuredOutputKind",
+    "StructuredOutputNormalization",
+    "StructuredOutputProvenance",
+    "StructuredOutputSource",
     "ToolCall",
     "ToolExecutor",
     "ToolRegistry",
@@ -37,4 +53,5 @@ __all__ = [
     "openai_tool_definition",
     "openai_message",
     "parse_openai_turn",
+    "audit_structured_output",
 ]

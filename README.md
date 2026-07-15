@@ -16,6 +16,59 @@ The project deliberately starts smaller than a full agent framework. The first
 goal is to turn one failure into one reproducible test that can be attached to an
 SDK issue or pull request.
 
+## Structured JSON output audit
+
+Version 0.2.0 adds a provider-neutral audit for the boundary between reasoning
+and final structured output. It classifies:
+
+- complete JSON directly in `content`;
+- a complete outer `json` Markdown fence, normalized explicitly;
+- complete JSON in `reasoning_content`, only with caller opt-in and only when
+  `content` is empty;
+- empty, provider-signaled truncated, and invalid JSON.
+
+It never searches prose for embedded JSON, repairs malformed JSON, falls back
+from invalid `content`, or treats a Markdown fence inside `reasoning_content` as
+valid. Optional Draft 2020-12 validation is reported separately from JSON syntax,
+so a schema failure cannot hide where the output came from.
+
+```python
+from ruagent_compat import StructuredOutputProvenance, audit_structured_output
+
+audit = audit_structured_output(
+    content="",
+    reasoning_content='{"answer":"Москва"}',
+    allow_reasoning_fallback=True,
+    schema={
+        "type": "object",
+        "properties": {"answer": {"type": "string"}},
+        "required": ["answer"],
+        "additionalProperties": False,
+    },
+    provenance=StructuredOutputProvenance(
+        provider="local-openai-compatible",
+        model="example-model",
+        request_id="request-1",
+        finish_reason="stop",
+        metadata={"runtime": "llama.cpp"},
+    ),
+)
+
+assert audit.kind == "reasoning_content_fallback"
+assert audit.accepted
+print(audit.to_dict())
+```
+
+Run the standalone proof:
+
+```bash
+python examples/structured_output_audit.py
+```
+
+`reasoning_content` fallback is a compatibility escape hatch, not evidence that
+the provider produced a correct final channel. The audit keeps the source,
+normalization decision, finish reason, and caller provenance visible.
+
 ## What is proven today
 
 The repository includes a deterministic scripted reference adapter. It verifies
