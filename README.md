@@ -1,6 +1,7 @@
 # ruagent-compat
 
 [![CI](https://github.com/Absamad-dew/ruagent-compat/actions/workflows/ci.yml/badge.svg)](https://github.com/Absamad-dew/ruagent-compat/actions/workflows/ci.yml)
+[![Release](https://img.shields.io/github/v/release/Absamad-dew/ruagent-compat)](https://github.com/Absamad-dew/ruagent-compat/releases/tag/v0.2.0)
 
 `ruagent-compat` is a small, provider-neutral executable contract for tool-using
 agents. It focuses on failures that language-only leaderboards miss:
@@ -15,6 +16,20 @@ agents. It focuses on failures that language-only leaderboards miss:
 The project deliberately starts smaller than a full agent framework. The first
 goal is to turn one failure into one reproducible test that can be attached to an
 SDK issue or pull request.
+
+**Runnable proof (scripted reference adapter, not a vendor benchmark):**
+[48 tests](tests) · [reference JSON](examples/reference.json) ·
+[HTML report](examples/reference.html) ·
+[release v0.2.0](https://github.com/Absamad-dew/ruagent-compat/releases/tag/v0.2.0).
+
+## Quickstart
+
+```bash
+python -m pip install -e ".[dev]"
+python -m pytest -q
+ruagent-compat verify --json reports/reference.json --html reports/reference.html
+python examples/structured_output_audit.py
+```
 
 ## Structured JSON output audit
 
@@ -74,14 +89,6 @@ normalization decision, finish reason, and caller provenance visible.
 The repository includes a deterministic scripted reference adapter. It verifies
 the conformance runner itself without network access or private data. It does
 **not** claim to measure Yandex, GigaChat, or T-Tech model quality yet.
-
-Run the reference suite:
-
-```bash
-python -m pip install -e ".[dev]"
-python -m pytest
-ruagent-compat verify --json reports/reference.json --html reports/reference.html
-```
 
 ## Contract
 
