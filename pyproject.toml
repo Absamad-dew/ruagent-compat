@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ruagent-compat"
-version = "0.2.0"
+version = "0.2.1"
 description = "Provider-neutral executable contracts for reliable tool-using agents"
 readme = "README.md"
 requires-python = ">=3.11"
@@ -33,6 +33,7 @@ packages = ["src/ruagent_compat"]
 [tool.pytest.ini_options]
 addopts = "-ra"
 asyncio_mode = "auto"
+asyncio_default_fixture_loop_scope = "function"
 pythonpath = ["src"]
 testpaths = ["tests"]
 

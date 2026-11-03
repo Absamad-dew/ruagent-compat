@@ -1,7 +1,7 @@
 # ruagent-compat
 
 [![CI](https://github.com/Absamad-dew/ruagent-compat/actions/workflows/ci.yml/badge.svg)](https://github.com/Absamad-dew/ruagent-compat/actions/workflows/ci.yml)
-[![Release](https://img.shields.io/github/v/release/Absamad-dew/ruagent-compat)](https://github.com/Absamad-dew/ruagent-compat/releases/tag/v0.2.0)
+[![Release](https://img.shields.io/github/v/release/Absamad-dew/ruagent-compat)](https://github.com/Absamad-dew/ruagent-compat/releases/tag/v0.2.1)
 
 `ruagent-compat` is a small, provider-neutral executable contract for tool-using
 agents. It focuses on failures that language-only leaderboards miss:
@@ -18,9 +18,15 @@ goal is to turn one failure into one reproducible test that can be attached to a
 SDK issue or pull request.
 
 **Runnable proof (scripted reference adapter, not a vendor benchmark):**
-[48 tests](tests) · [reference JSON](examples/reference.json) ·
+[50 tests](tests) · [reference JSON](examples/reference.json) ·
 [HTML report](examples/reference.html) ·
-[release v0.2.0](https://github.com/Absamad-dew/ruagent-compat/releases/tag/v0.2.0).
+[release v0.2.1](https://github.com/Absamad-dew/ruagent-compat/releases/tag/v0.2.1).
+
+## Concurrency fix in 0.2.1
+
+One executor now serializes its local state transaction across concurrent calls. Regression tests reproduce two previous failures: eight identical calls entering the handler eight times, and eight distinct calls leaving a counter at one. The corrected executor produces one dispatch for duplicates and preserves all eight distinct commits.
+
+This executor is local to one process/event loop. Copy-on-write rollback covers its in-memory state; it cannot undo a remote API effect. For durable cross-process action recovery, see [Agent Action Ledger](https://github.com/Absamad-dew/agent-action-ledger).
 
 ## Quickstart
 

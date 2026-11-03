@@ -2,6 +2,7 @@
 
 from __future__ import annotations
 
+import asyncio
 import copy
 import hashlib
 import inspect
@@ -101,8 +102,15 @@ class ToolExecutor:
         self.state = state
         self.approved_tools = frozenset(approved_tools)
         self._ledger: dict[str, _LedgerEntry] = {}
+        self._lock = asyncio.Lock()
 
     async def execute(self, call: ToolCall) -> ToolOutcome:
+        # The copied-state commit and idempotency entry form one local transaction.
+        # A single executor belongs to one event loop; external I/O is not rolled back.
+        async with self._lock:
+            return await self._execute_locked(call)
+
+    async def _execute_locked(self, call: ToolCall) -> ToolOutcome:
         tool = self.registry.get(call.name)
         self._validate(tool, call.arguments)
 
